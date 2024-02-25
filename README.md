@@ -1,11 +1,19 @@
-Injection Scanner
+##InScan
 
-Scan for injecion and XSS vulnerbilities using a search query.
-Tests for XSS using differnet payloads
+Scam for injection vulnerbilities 
 
-Tests SQLi using differnet payloads
+including:
+XSS
+SQL Injection
+Command Injection
 
-Tests for command injection
+##Usage
+
+`python InScam.py`
+
+Choose to scan a specific URL or scan search results
+
+Scans for Vulms and reports any vulnerbilities found
 
 
-Returns a list of all sites with the vulnerbilties 
+
