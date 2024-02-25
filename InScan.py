@@ -21,7 +21,31 @@ def print_title():
 """
     print(Fore.BLUE + title + Style.RESET_ALL)
 def scan_website(url):
-    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Testing: {url}:" + Style.RESET_ALL)
+    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Crawling and testing: {url}:" + Style.RESET_ALL)
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            links = soup.find_all('a', href=True)
+
+            for link in links:
+                href = link['href']
+                if href.startswith('http') or href.startswith('https'):
+                    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {href}")
+                    test_link(href)
+
+            print("\n=====================")
+
+        else:
+            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Failed to fetch {url}. Skipping...")
+            print("\n=====================")
+
+    except Exception as e:
+        print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
+        print("\n=====================")
+
+
+def test_link(url):
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -30,7 +54,6 @@ def scan_website(url):
 
             if not input_boxes:
                 print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} No injection vectors found.")
-                print("\n=====================")
                 return
 
             vulnerabilities = []
@@ -47,17 +70,17 @@ def scan_website(url):
             time.sleep(5)
 
             if vulnerabilities:
-                print(f"{Fore.WHITE}[{Fore.YELLOW}RESULT{Fore.WHITE}]{Fore.RESET} Detected vulnerabilities:")
+                print(f"{Fore.WHITE}[{Fore.YELLOW}RESULT{Fore.WHITE}]{Fore.RESET} Detected vulnerabilities for {url}:")
                 for vuln in vulnerabilities:
                     print(f"- Type: {vuln['type']}, Input Parameter: {vuln['input_param']}, Payload: {vuln['payload']}")
+                print("\n=====================")
 
             else:
-                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.GREEN + " No vulnerabilities found." + Style.RESET_ALL)
+                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.GREEN + f" No vulnerabilities found for {url}." + Style.RESET_ALL)
 
         else:
             print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Failed to fetch {url}. Skipping...")
-
-        print("\n=====================")
+            print("\n=====================")
 
     except Exception as e:
         print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
