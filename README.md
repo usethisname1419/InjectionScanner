@@ -13,7 +13,7 @@ Command Injection,
 
 Choose to scan a specific URL or scan search results
 
-Scans for Vulms and reports any vulnerbilities found
+Scans for Vulns and reports any vulnerbilities found
 
 
 
