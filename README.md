@@ -3,9 +3,9 @@
 Scam for injection vulnerbilities 
 
 including:
-XSS
-SQL Injection
-Command Injection
+XSS,
+SQL Injection,
+Command Injection,
 
 ##Usage
 
