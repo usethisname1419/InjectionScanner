@@ -4,10 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from urllib.parse import urlparse, urljoin
-# Initialize colorama
+
 colorama.init(autoreset=True)
 
-# Function to search on a search engine
 def print_title():
     title = """
  .___           _________                         
@@ -34,7 +33,7 @@ def get_internal_links(base_url, soup):
         href = link['href']
         parsed_href = urlparse(href)
 
-        # Construct absolute URL
+       
         absolute_url = urljoin(base_url, href)
 
         # Check if the absolute URL is within the same domain as the base URL
@@ -142,7 +141,6 @@ def web_search(query, num_results=5):
 def check_xss(url, input_boxes):
     vulnerabilities = []
 
-    # Common XSS payloads
     payloads = [
         "<script>alert('XSS')</script>",
         "<img src='x' onerror='alert(\"XSS\")'>",
@@ -178,7 +176,7 @@ def check_xss(url, input_boxes):
 def check_sql_injection(url, input_boxes):
     vulnerabilities = []
 
-    # Common SQL injection payloads
+    
     payloads = [
         "SELECT * FROM nonexistent_table;",
         ";",
@@ -190,14 +188,12 @@ def check_sql_injection(url, input_boxes):
         "1' AND EXISTS(SELECT * FROM information_schema.tables WHERE table_schema=database() LIMIT 1) --"
     ]
 
-    # Errors indicative of different DBMSs
+  
     errors = [
-        # MySQL
+
         "you have an error in your sql syntax;",
-        "warning: mysql",
-        # SQL Server
+        "warning: mysql",      
         "unclosed quotation mark after the character string",
-        # Oracle
         "quoted string not properly terminated",
         "Server Error"
         "information_schema"
@@ -225,7 +221,7 @@ def check_sql_injection(url, input_boxes):
                         })
                         print(
                             f"{Fore.WHITE}[{Fore.YELLOW}RESULT{Fore.WHITE}]{Fore.RESET} :{Fore.RED} {vulnerabilities[-1]['result']}")
-                        break  # Stop checking further errors for this payload
+                        break  
 
             if not vulnerabilities:
                 print(
