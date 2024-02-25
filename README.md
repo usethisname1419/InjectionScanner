@@ -9,7 +9,7 @@ Command Injection,
 
 ##Usage
 
-`python InScam.py`
+`python InScan.py`
 
 Choose to scan a specific URL or scan search results
 
