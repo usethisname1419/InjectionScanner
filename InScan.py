@@ -3,7 +3,7 @@ from colorama import Fore, Style
 import requests
 from bs4 import BeautifulSoup
 import time
-
+from urllib.parse import urlparse, urljoin
 # Initialize colorama
 colorama.init(autoreset=True)
 
@@ -20,21 +20,53 @@ def print_title():
                        By: Derek Johnston                         
 """
     print(Fore.BLUE + title + Style.RESET_ALL)
+
+
+
+
+
+def get_internal_links(base_url, soup):
+    internal_links = set()
+    parsed_base_url = urlparse(base_url)
+    base_domain = f"{parsed_base_url.scheme}://{parsed_base_url.netloc}"
+
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        parsed_href = urlparse(href)
+
+        # Construct absolute URL
+        absolute_url = urljoin(base_url, href)
+
+        # Check if the absolute URL is within the same domain as the base URL
+        if parsed_href.netloc == '' or parsed_href.netloc == parsed_base_url.netloc:
+            internal_links.add(absolute_url)
+
+    return internal_links
+
+
 def scan_website(url):
-    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Crawling and testing: {url}:" + Style.RESET_ALL)
+    print(
+        f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f"{Fore.RESET} Crawling: {Fore.BLUE}{url}:" + Style.RESET_ALL)
     try:
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            links = soup.find_all('a', href=True)
 
-            for link in links:
-                href = link['href']
-                if href.startswith('http') or href.startswith('https'):
-                    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {href}")
-                    test_link(href)
+            # Gather internal links
+            internal_links = get_internal_links(url, soup)
+
+            # Print internal links
+            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Links to test :")
+            for link in internal_links:
+                print(link)
+                time.sleep(0.3)
 
             print("\n=====================")
+
+            # Start vulnerability testing for each internal link
+            for internal_link in internal_links:
+                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {internal_link}")
+                test_link(internal_link)
 
         else:
             print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Failed to fetch {url}. Skipping...")
@@ -43,7 +75,6 @@ def scan_website(url):
     except Exception as e:
         print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
         print("\n=====================")
-
 
 def test_link(url):
     try:
@@ -85,8 +116,6 @@ def test_link(url):
     except Exception as e:
         print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
         print("\n=====================")
-
-
 def web_search(query, num_results=5):
     try:
         url = f"https://www.bing.com/search?q={query}&count={num_results}"
@@ -250,7 +279,7 @@ def main():
             vulnerable_sites = []
 
             for url in search_results:
-                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Testing: {url}:" + Style.RESET_ALL)
+                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {Fore.BLUE}{url}:" + Style.RESET_ALL)
                 try:
                     response = requests.get(url)
                     if response.status_code == 200:
