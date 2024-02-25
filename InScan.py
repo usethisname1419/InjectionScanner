@@ -50,7 +50,8 @@ def scan_website(url):
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-
+            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {url}")
+            test_link(url)
             # Gather internal links
             internal_links = get_internal_links(url, soup)
 
