@@ -57,15 +57,15 @@ def check_xss(url, input_boxes):
                             submit_button = driver.find_element(By.XPATH, "//input[@type='submit']")
                             submit_button.click()
                         except NoSuchElementException:
-                            pass  # No submit button found, proceed without clicking
-                        # Submit the form (if applicable)
+                            pass
+
                         input_field.submit()
 
                         try:
-                            # Wait for a maximum of 5 seconds for the alert to be present
+
                             alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
 
-                            # Check if an alert is present
+
                             if alert:
                                 vulnerabilities.append({
                                     'type': 'XSS',
@@ -74,12 +74,12 @@ def check_xss(url, input_boxes):
                                     'result': f'XSS Success with payload : {payload}'
                                 })
                                 print(f"XSS Success with payload : {payload}")
-                                alert.accept()  # Close the alert dialog
+                                alert.accept()
                         except TimeoutException:
-                            pass  # Move to the next payload if alert dialog is not present within the timeout
+                            pass
 
                     except NoSuchElementException:
-                        continue  # Move to the next payload if input box is not found
+                        continue
     finally:
         # Close the browser
         driver.quit()
@@ -131,20 +131,20 @@ def scan_website(url):
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {url}")
-            test_link(url)
+           
             # Gather internal links
             internal_links = get_internal_links(url, soup)
 
             # Print internal links
-            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Links to test :")
+
             for link in internal_links:
                 print(link)
                 time.sleep(0.3)
 
             print("\n=====================")
+            print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {url}")
+            test_link(url)
 
-            # Start vulnerability testing for each internal link
             for internal_link in internal_links:
                 print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET} Testing: {internal_link}")
                 test_link(internal_link)
@@ -378,4 +378,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Keyboard interrupt detected. Exiting...")
+    except Exception as e:
+        print(f"An error occurred: {e}")
