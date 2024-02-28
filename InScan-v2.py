@@ -84,7 +84,7 @@ def check_xss(url, input_boxes):
         # Close the browser
         driver.quit()
     if not vulnerabilities:
-        print("No XSS vulnerabilities found")
+        print(f"{Fore.WHITE}[{Fore.YELLOW}INFO{Fore.WHITE}]{Fore.RESET}{Fore.GREEN} No XSS vulnerability found for input box: {Fore.BLUE}{input_box['name']}{Fore.RESET}")
 
     return vulnerabilities
 
@@ -131,7 +131,7 @@ def scan_website(url):
         response = requests.get(url)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-           
+
             # Gather internal links
             internal_links = get_internal_links(url, soup)
 
